@@ -1,12 +1,25 @@
 # Zepto API Documentation
 
-> Discovered via traffic capture. Update as endpoints are found.
+> Pending traffic capture. APK has been patched and re-signed with SSL pinning bypass.
+> Awaiting user test to verify the patched APK works with HTTP Toolkit.
 
 ## Package Name
 `com.zeptoconsumerapp`
 
+## APK Patching Notes
+- OkHttp CertificatePinner methods are **obfuscated**: `check` → `a`, `lazyCerts` → `b`
+- Patched signatures:
+  - `a(Ljava/lang/String;Ljava/util/List;)V` → `return-void`
+  - `b(Ljava/lang/String;Lkotlin/jvm/functions/Function0;)V` → `return-void`
+- Also patched custom X509TrustManager.checkServerTrusted
+- All split APKs re-signed with same debug keystore
+
+## Known Domains
+- `zeptonow.com`
+- `zepto.co`
+
 ## Base URL
-<!-- TODO: fill after mitmproxy capture -->
+<!-- TODO: fill after traffic capture -->
 
 ## Authentication
 
@@ -40,6 +53,6 @@
 <!-- TODO -->
 
 ## Notes
-- Does the API use request signing (HMAC)?
 - Is it REST or GraphQL?
 - How is location communicated?
+- Does the API use request signing (HMAC)?

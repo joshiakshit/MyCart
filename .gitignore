@@ -42,6 +42,12 @@ ios/Pods/
 # Recon — captured API traffic (sensitive)
 recon/captured/
 
+# Recon — decompiled/patched APKs (large, regeneratable)
+recon/patched/
+
+# Recon — large binary tools (download separately)
+recon/tools/apktool.jar
+
 # IDE
 .idea/
 .vscode/
