@@ -182,10 +182,43 @@ Content-Type: application/json
 }
 ```
 
-**Response**: Large SDUI response (~500KB) containing:
+**Response**: Large SDUI response (~500KB). Top-level structure:
+```json
+{
+  "is_success": true,
+  "response": {
+    "snippets": [...],      // flat array of ~95 heterogeneous widgets
+    "pagination": {...},    // next page URL
+    "tracking": {...}       // layout engine metadata
+  }
+}
+```
 
-1. **Filter pills** (`pill_container_snippet`) — Quantity, Brand, Fat Profile, Milk Source, Price, etc.
-2. **Product cards** (`product_card_type_unbounded_v3`) — The actual search results
+The `snippets` array is a **flat list** — product cards are interleaved with filter pills,
+loading overlays, section headers, brand carousels, and recommendation rails.
+
+- ~15 product cards (`product_card_type_unbounded_v3`) per page
+- 178 total results for "milk" query
+- Other widget types: `pill_snippet`, `pill_container_snippet`, `horizontal_list`,
+  `loading_error_overlay_snippet`, `grid_container_vr`, `image_text_vr_type_header`
+
+#### Pagination
+
+`response.pagination`:
+```json
+{
+  "next_url": "/v1/layout/search?offset=15&limit=15&actual_query=milk&page_index=1&q=milk&search_count=178&search_type=type_to_search&total_pagination_items=178&..."
+}
+```
+
+| Param | Value | Description |
+|-------|-------|-------------|
+| offset | 15 | Next page start index |
+| limit | 15 | Items per page |
+| page_index | 1 | 0-indexed page number |
+| search_count | 178 | Total results |
+| total_pagination_items | 178 | Total pageable items |
+| actual_query | milk | Resolved query |
 
 #### Extracting Product Data
 
@@ -243,17 +276,59 @@ Product data lives in **two places** per product card:
 }
 ```
 
-**C. Additional display fields** on the product card widget:
-- `accessibility_info.text`: Human-readable summary (e.g. "Country Delight 25 g High Protein Chocolate Milk is available for ₹119")
+**C. `data.pricing_info`** (display pricing on the card):
+
+Non-discounted (price == MRP):
+```json
+{
+  "price": {"text": "₹31", "font": {"size": "600", "weight": "bold"}}
+}
+```
+
+Discounted (price < MRP) — `mrp` field **only appears when discounted**:
+```json
+{
+  "mrp": {"text": "~~₹105~~", "is_markdown": 1},
+  "price": {"text": "₹99", "font": {"size": "600", "weight": "bold"}}
+}
+```
+
+**D. `tracking.common_attributes`** (offer/discount details):
+```json
+{
+  "offer": "5% OFF on MRP",
+  "product_offers": "percentage_off",
+  "promo_identifers": ["OFFER_TYPE_FLAT_OFF_3159"]
+}
+```
+Empty strings when no discount.
+
+**E. Stock/availability fields**:
+- `cart_item.inventory`: Numeric units in stock (e.g. `12`)
+- `cart_item.unavailable_quantity`: `0` when available
+- `tracking.common_attributes.inventory_text`: `""` (plenty) or `"1 left"` (low stock)
+- `tracking.common_attributes.inventory_limit`: Max purchasable quantity
+- `cta_data.stepper.max_count`: Max cart quantity (matches inventory)
+- `data.product_state`: `"available"`
+
+**F. Additional display fields** on the product card widget:
+- `accessibility_info.text`: Human-readable summary (e.g. "Mother Dairy Cow Milk is available for Rs.31")
 - `display_name.text`: Product name
-- `pricing_info.price.text`: Display price (e.g. "₹40")
-- `media_container.items[].image.url`: Product images
-- `product_state`: `"available"` or absent
+- `media_container.items[].image.url`: Product images (up to 9 per product)
 - `identity.id`: Product ID as string
+- `unit_of_measure.title.text`: Unit (e.g. "500 ml")
+- `badge_container.items[0].text_data.text`: ETA badge (`"%d mins"` — resolved client-side)
+- `rating.bar.value`: Numeric rating (e.g. 4.61)
+- `rating.bar.title.text`: Rating count (e.g. "1.8 lac")
 
 #### Adapter Strategy
-For our adapter, parse `tracking.widget_meta` from each `product_card_type_unbounded_v3` widget.
-It has the cleanest data: product_id, name, brand, price, mrp, unit, rating, inventory, state.
+Best extraction path: `cta_data.stepper.increment_actions.default[0].add_to_cart.cart_item`
+gives clean numeric `price`, `mrp`, `product_id`, `product_name`, `unit`, `inventory`, `image_url`.
+
+Supplement with `tracking.common_attributes` for `offer`, `product_offers`, `brand`, `rating`,
+`ptype` (category), and `reason` (search relevance score).
+
+Filter snippets by `widget_type == "product_card_type_unbounded_v3"` to skip UI chrome.
 
 ---
 
