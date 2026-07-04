@@ -1,0 +1,76 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+.venv/
+venv/
+env/
+
+# Node / React Native
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.expo/
+
+# Android
+*.apk
+*.aab
+*.dex
+*.class
+*.iml
+.gradle/
+local.properties
+mobile/android/app/build/
+mobile/android/build/
+mobile/android/.cxx/
+
+# iOS (future)
+ios/Pods/
+*.xcworkspace
+*.xcuserdata
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# Recon — captured API traffic (sensitive)
+recon/captured/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.override.yml
+
+# Database
+*.sqlite3
+*.db
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Coverage
+htmlcov/
+.coverage
+.coverage.*
+
+# mypy / pytest
+.mypy_cache/
+.pytest_cache/
+
+# Metro bundler (React Native)
+.metro-health-check*
